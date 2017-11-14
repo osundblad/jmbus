@@ -1,26 +1,47 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package org.openmuc.jmbus;
 
-import static org.junit.Assert.assertEquals;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.openmuc.jmbus.MBusConnection.MBusSerialBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.openmuc.jmbus.MBusConnection.MBusSerialBuilder;
-
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(JUnitParamsRunner.class)
 public class MBusConnectionTest {
+
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
+
+    @Test
+    public void setBaudrate_zeroOrNegative_shouldFail() {
+        final MBusConnection.MBusSerialBuilder serialBuilder = new MBusSerialBuilder("/dev/ttyS0");
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage("baudrate (0) may not be 0 or negative");
+        serialBuilder.setBaudrate(0);
+    }
+
+    @Test
+    public void setTimeout_negative_shouldFail() {
+        final MBusConnection.MBusSerialBuilder serialBuilder = new MBusSerialBuilder("/dev/ttyS0");
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage("timeout (-1) may not be negative");
+        serialBuilder.setTimeout(-1);
+    }
+
 
     @Test
     @Ignore

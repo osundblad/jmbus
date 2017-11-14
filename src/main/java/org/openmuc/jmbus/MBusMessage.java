@@ -1,11 +1,9 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package org.openmuc.jmbus;
-
-import java.io.IOException;
 
 /**
  * 
@@ -23,30 +21,36 @@ import java.io.IOException;
  */
 public class MBusMessage {
 
-    private static final int RSP_UD_HEADER_LENGTH = 6;
+    public static final int RSP_UD_HEADER_LENGTH = 6;
+    // 261 is the maximum size of a long frame
+    public static final int MAX_MESSAGE_SIZE = 261;
+
+    public static final int TYPE_RSP_UD = 0x68;
+    public static final int TYPE_SINGLE_CHARACTER = 0xE5;
 
     public enum MessageType {
         // the other message types (e.g. SND_NKE, REQ_UD2) cannot be sent from slave to master and are therefore
         // omitted.
-        SINGLE_CHARACTER(0xE5),
-        RSP_UD(0x68);
+        SINGLE_CHARACTER(TYPE_SINGLE_CHARACTER),
+        RSP_UD(TYPE_RSP_UD);
 
         private static final MessageType[] VALUES = values();
         private final int value;
 
-        private MessageType(int value) {
+        MessageType(int value) {
             this.value = value;
         }
 
-        private static MessageType messageTypeFor(byte value) throws IOException {
+        private static MessageType messageTypeFor(byte value) throws DecodingException {
             int vAsint = value & 0xff;
             for (MessageType messageType : VALUES) {
                 if (vAsint == messageType.value) {
                     return messageType;
                 }
             }
-            throw new IOException(String.format("Unexpected first frame byte: 0x%02X.", value));
+            throw new DecodingException(String.format("Unexpected first frame byte: 0x%02X.", value));
         }
+
     }
 
     private final MessageType messageType;
@@ -59,10 +63,10 @@ public class MBusMessage {
         this.variableDataStructure = variableDataStructure;
     }
 
-    public static MBusMessage decode(byte[] buffer, int length) throws IOException {
-        MessageType messageType = MessageType.messageTypeFor(buffer[0]);
-        int addressField;
-        VariableDataStructure variableDataStructure;
+    public static MBusMessage decode(byte[] buffer, int length) throws DecodingException {
+        final MessageType messageType = MessageType.messageTypeFor(buffer[0]);
+        final int addressField;
+        final VariableDataStructure variableDataStructure;
 
         switch (messageType) {
         case SINGLE_CHARACTER:
@@ -83,27 +87,27 @@ public class MBusMessage {
         return new MBusMessage(messageType, addressField, variableDataStructure);
     }
 
-    private static void checkLongFrameFields(byte[] buffer) throws IOException {
+    private static void checkLongFrameFields(byte[] buffer) throws DecodingException {
         if (buffer[1] != buffer[2]) {
-            throw new IOException("Length fields are not identical in long frame!");
+            throw new DecodingException("Length fields are not identical in long frame!");
         }
 
         if (buffer[3] != MessageType.RSP_UD.value) {
-            throw new IOException("Fourth byte of long frame was not 0x68.");
+            throw new DecodingException("Fourth byte of long frame was not 0x68.");
         }
 
         int controlField = buffer[4] & 0xff;
 
         if ((controlField & 0xcf) != 0x08) {
-            throw new IOException(String.format("Unexpected control field value: 0x%02X.", controlField));
+            throw new DecodingException(String.format("Unexpected control field value: 0x%02X.", controlField));
         }
     }
 
-    private static int getLongFrameMessageLength(byte[] buffer, int length) throws IOException {
+    private static int getLongFrameMessageLength(byte[] buffer, int length) throws DecodingException {
         int messageLength = buffer[1] & 0xff;
 
         if (messageLength != length - RSP_UD_HEADER_LENGTH) {
-            throw new IOException("Wrong length field in frame header does not match the buffer length. Length field: "
+            throw new DecodingException("Wrong length field in frame header does not match the buffer length. Length field: "
                     + messageLength + ", buffer length: " + length + " !");
         }
         return messageLength;

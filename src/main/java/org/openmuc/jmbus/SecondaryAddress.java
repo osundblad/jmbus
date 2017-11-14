@@ -1,16 +1,15 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 package org.openmuc.jmbus;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import org.openmuc.jmbus.util.FiveBitString;
 
 import javax.xml.bind.DatatypeConverter;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class represents a secondary address. Use the static initalizer to initialize the
@@ -26,6 +25,20 @@ public class SecondaryAddress implements Comparable<SecondaryAddress> {
     private final byte[] bytes;
     private final int hashCode;
     private final boolean isLongHeader;
+
+    public static SecondaryAddress from(final int deviceId, final String manufacturerId, final int version, final DeviceType deviceType) {
+        return from(Bcd.from(deviceId), manufacturerId, version, deviceType);
+    }
+
+    public static SecondaryAddress from(final Bcd bcd, final String manufacturerId, final int version, final DeviceType deviceType) {
+        final byte[] idString = FiveBitString.encodeManufacturerIdString(manufacturerId);
+        final byte[] array = ByteBuffer.allocate(14)
+                .put(bcd.getBytes())
+                .put(idString)
+                .put((byte) version)
+                .put((byte) deviceType.getId()).array();
+        return new SecondaryAddress(array, 0 , true);
+    }
 
     /**
      * Instantiate a new secondary address within a long header.
@@ -175,32 +188,15 @@ public class SecondaryAddress implements Comparable<SecondaryAddress> {
         this.hashCode = Arrays.hashCode(this.bytes);
         this.isLongHeader = longHeader;
 
-        try (ByteArrayInputStream is = new ByteArrayInputStream(this.bytes)) {
-            if (longHeader) {
-                this.deviceId = decodeDeviceId(is);
-                this.manufacturerId = decodeManufacturerId(is);
-            }
-            else {
-                this.manufacturerId = decodeManufacturerId(is);
-                this.deviceId = decodeDeviceId(is);
-            }
-            this.version = is.read() & 0xff;
-            this.deviceType = DeviceType.getInstance(is.read() & 0xff);
-        } catch (IOException e) {
-            // should not occur
-            throw new RuntimeException(e);
+        if (longHeader) {
+            deviceId = Bcd.from(bytes, 0);
+            manufacturerId = FiveBitString.decodeManufacturerId(bytes, 4);
+        } else {
+            manufacturerId = FiveBitString.decodeManufacturerId(bytes, 0);
+            deviceId = Bcd.from(bytes, 2);
         }
-    }
-
-    private static String decodeManufacturerId(ByteArrayInputStream is) {
-        int manufacturerIdAsInt = (is.read() & 0xff) + (is.read() << 8);
-        char c = (char) ((manufacturerIdAsInt & 0x1f) + 64);
-        manufacturerIdAsInt = (manufacturerIdAsInt >> 5);
-        char c1 = (char) ((manufacturerIdAsInt & 0x1f) + 64);
-        manufacturerIdAsInt = (manufacturerIdAsInt >> 5);
-        char c2 = (char) ((manufacturerIdAsInt & 0x1f) + 64);
-
-        return new StringBuilder().append(c2).append(c1).append(c).toString();
+        version = Byte.toUnsignedInt(bytes[6]);
+        deviceType = DeviceType.getInstance(bytes[7]);
     }
 
     private static byte[] encodeManufacturerId(String manufactureId) {
@@ -216,17 +212,6 @@ public class SecondaryAddress implements Comparable<SecondaryAddress> {
         manufacturerIdAsInt += (manufactureIdArray[1] - 64);
 
         return ByteBuffer.allocate(4).putInt(manufacturerIdAsInt).array();
-    }
-
-    private static Bcd decodeDeviceId(ByteArrayInputStream is) throws IOException {
-        int msgSize = 4;
-        byte[] idArray = new byte[msgSize];
-        int actual = is.read(idArray);
-
-        if (msgSize != actual) {
-            throw new IOException("Failed to read BCD data. Data missing.");
-        }
-        return new Bcd(idArray);
     }
 
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -46,6 +46,9 @@ public abstract class SerialBuilder<T, S extends SerialBuilder<T, S>> extends Bu
      * @return the builder itself
      */
     public S setBaudrate(int baudrate) {
+        if (baudrate <= 0) {
+            throw new IllegalArgumentException(String.format("baudrate (%d) may not be 0 or negative", baudrate));
+        }
         this.baudrate = baudrate;
         return self();
     }

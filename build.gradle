@@ -49,12 +49,12 @@ configure(javaProjects) {
   apply plugin: 'net.saliman.cobertura'
 
   uploadArchives.enabled = false
-  
+
   group = cfgGroup
 
   if (!project.properties.containsKey('cfgJavaVersion')) {
     project.ext {
-      cfgJavaVersion = '1.7'
+      cfgJavaVersion = '1.8'
     }
   }
 
@@ -67,7 +67,9 @@ configure(javaProjects) {
   }
 
   sourceSets {
-    sample
+    sample {
+      compileClasspath += sourceSets.main.runtimeClasspath
+    }
     itest {
       compileClasspath += sourceSets.main.runtimeClasspath
     }
@@ -77,26 +79,26 @@ configure(javaProjects) {
     testCompile group: "junit", name: "junit", version: "4.12"
     itestCompile group: "junit", name: "junit", version: "4.12"
   }
-  
+
   jar {
     manifest {
       version = project.version.replace("-",".");
     }
   }
   cobertura {
-  
+
     dependencies {
       testCompile 'org.slf4j:slf4j-simple:1.6.1'
     }
- 	coverageFormats = ['html', 'xml']				
-  	coverageIgnoreTrivial = false					
+ 	coverageFormats = ['html', 'xml']
+  	coverageIgnoreTrivial = false
   	coverageIgnores = ['org.slf4j.Logger.*']
-  	coverageExcludes = ['.*\\.app\\..*', '.*\\.cli-app\\..*', '.*\\.sample\\..*']	
+  	coverageExcludes = ['.*\\.app\\..*', '.*\\.cli-app\\..*', '.*\\.sample\\..*']
    	coverageReportDir = new File("$buildDir/reports/cobertura")
    	coverageTestTasks {
       project.tasks.withType(Test).matching {it.name == 'test'}
     }
- 	  
+
   }
 
   task jarAll(type: Copy) {
@@ -123,7 +125,7 @@ configure(javaProjects) {
       }
     }
   }
-  
+
   build.dependsOn {asciidoctor}
   build.dependsOn {jarAll}
 
@@ -165,7 +167,7 @@ configure(repositoryProjects) {
       }
     }
   }
-  
+
   uploadArchives {
     repositories {
       mavenDeployer {
@@ -188,7 +190,7 @@ configure(repositoryProjects) {
         }
 
         pom.project {
-          
+
           //additional pom information can be found in subproject build.gradle files
 
           packaging "jar"
@@ -273,7 +275,7 @@ tasks.withType(Tar) {
   dependsOn(asciidoctor)
 
   compression = Compression.GZIP
-  
+
   destinationDir = file("build/distributions/")
 }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -31,6 +31,9 @@ public abstract class Builder<C, B extends Builder<C, B>> {
      * @return the builder itself.
      */
     public B setTimeout(int timeout) {
+            if (timeout < 0) {
+            throw new IllegalArgumentException(String.format("timeout (%d) may not be negative", timeout));
+        }
         this.timeout = timeout;
         return self();
     }

@@ -1,4 +1,4 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -56,11 +56,11 @@ class ScanSecondaryAddress {
                 try {
                     readSecondaryAddress = mBusConnection.read(0xfd).getSecondaryAddress();
 
-                } catch (InterruptedIOException e) {
-                    notifyScanMsg(secondaryAddressListener, "Read (REQ_UD2) TimeoutException");
+                } catch (final NoMessageException e) {
+                    notifyScanMsg(secondaryAddressListener, "Read (REQ_UD2) Timeout");
                     collision = false;
-                } catch (IOException e) {
-                    notifyScanMsg(secondaryAddressListener, "Read (REQ_UD2) IOException / Collision");
+                } catch (final MessageCollisionException | PartialMessageException e) {
+                    notifyScanMsg(secondaryAddressListener, "Read (REQ_UD2) Collision");
                     collision = true;
                 }
 
@@ -117,7 +117,7 @@ class ScanSecondaryAddress {
      * 
      * @param wildcard
      *            secondary address wildcard e.g. f1ffffffffffffff
-     * @return true if any device responsed else false
+     * @return true if any device responded else false
      * @throws IOException 
      */
     private static boolean scanSelection(MBusConnection mBusConnection, SecondaryAddress wildcard) throws IOException {

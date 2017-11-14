@@ -1,4 +1,4 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -361,27 +361,27 @@ public class DataRecord {
             dataValueType = DataValueType.LONG;
             break;
         case 0x09:
-            dataValue = new Bcd(Arrays.copyOfRange(buffer, i, i + 1));
+            dataValue = Bcd.from(Arrays.copyOfRange(buffer, i, i + 1));
             dataValueType = DataValueType.BCD;
             i += 1;
             break;
         case 0x0a:
-            dataValue = new Bcd(Arrays.copyOfRange(buffer, i, i + 2));
+            dataValue = Bcd.from(Arrays.copyOfRange(buffer, i, i + 2));
             dataValueType = DataValueType.BCD;
             i += 2;
             break;
         case 0x0b:
-            dataValue = new Bcd(Arrays.copyOfRange(buffer, i, i + 3));
+            dataValue = Bcd.from(Arrays.copyOfRange(buffer, i, i + 3));
             dataValueType = DataValueType.BCD;
             i += 3;
             break;
         case 0x0c:
-            dataValue = new Bcd(Arrays.copyOfRange(buffer, i, i + 4));
+            dataValue = Bcd.from(Arrays.copyOfRange(buffer, i, i + 4));
             dataValueType = DataValueType.BCD;
             i += 4;
             break;
         case 0x0e:
-            dataValue = new Bcd(Arrays.copyOfRange(buffer, i, i + 6));
+            dataValue = Bcd.from(Arrays.copyOfRange(buffer, i, i + 6));
             dataValueType = DataValueType.BCD;
             i += 6;
             break;
